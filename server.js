@@ -14,6 +14,8 @@ const MAX_PLAYERS = 8;
 const MIN_PLAYERS = 2;
 const TOTAL_ROUNDS = 13;
 const REVIEW_SECONDS = 12;
+const RESULT_SECONDS = 5;                    // 술래 답을 보여주는 시간
+const EASY_CHOICES = 6;                      // 이지모드 보기 개수
 const CLUE_TIMES = [10, 15, 20, 30, 60];
 const CHAR_COUNT = 8;
 const EMOJIS = ['laugh', 'cry', 'angry', 'speechless', 'surprised'];
@@ -31,6 +33,7 @@ const rooms = new Map();
 // ---------------- 유틸 ----------------
 const newId = () => crypto.randomBytes(8).toString('hex');
 const norm = (s) => String(s || '').replace(/\s+/g, '');
+const key = (s) => norm(s).toLowerCase(); // 대소문자 무시 비교용
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -47,21 +50,21 @@ function newCode() {
   return c;
 }
 
-// 힌트 검사: 한글 단어만, 정답/정답 일부/합성어 금지
+// 힌트 검사: 한글/영어 한 단어, 정답/정답 일부/합성어 금지
 function validateClue(raw, word) {
   const t = String(raw || '').trim();
-  const w = norm(word);
+  const lt = t.toLowerCase();
+  const w = key(word);
   if (!t) return '힌트를 입력해 주세요.';
   if (/\s/.test(t)) return '띄어쓰기 없이 한 단어로 적어 주세요.';
-  if (t.length > 12) return '힌트는 12글자까지 쓸 수 있어요.';
-  if (/[a-zA-Zａ-ｚＡ-Ｚ]/.test(t)) return '영어는 쓸 수 없어요.';
+  if (t.length > 15) return '힌트는 15글자까지 쓸 수 있어요.';
   if (/[0-9０-９]/.test(t)) return '숫자는 쓸 수 없어요.';
   if (/[ㄱ-ㅎㅏ-ㅣ]/.test(t)) return '자음·모음만 따로 쓸 수 없어요. (예: ㅋㅋ, ㅠㅠ)';
-  if (!/^[가-힣]+$/.test(t)) return '한글 단어만 쓸 수 있어요. (특수문자·이모티콘·한자 불가)';
-  if (t.includes(w)) return '정답 단어가 들어간 힌트는 쓸 수 없어요.';
-  if (w.includes(t)) return '정답 단어의 일부는 힌트로 쓸 수 없어요.';
-  for (let i = 0; i < t.length - 1; i++) {
-    if (w.includes(t.substr(i, 2))) return '정답과 두 글자 이상 겹치는 합성어는 쓸 수 없어요.';
+  if (!/^[가-힣a-zA-Z]+$/.test(t)) return '한글이나 영어 단어만 쓸 수 있어요. (특수문자·이모티콘·한자 불가)';
+  if (lt.includes(w)) return '정답 단어가 들어간 힌트는 쓸 수 없어요.';
+  if (w.includes(lt)) return '정답 단어의 일부는 힌트로 쓸 수 없어요.';
+  for (let i = 0; i < lt.length - 1; i++) {
+    if (/[가-힣]{2}/.test(lt.substr(i, 2)) && w.includes(lt.substr(i, 2))) return '정답과 두 글자 이상 겹치는 합성어는 쓸 수 없어요.';
   }
   return null;
 }
@@ -134,8 +137,6 @@ function setupRound(room) {
     topic = nextTopic(room);
     const pool = EASY_TOPICS[topic].words;
     words = draw(room, 'easy:' + topic, pool, 5);
-    const extra = shuffle(pool.filter((w) => !words.includes(w))).slice(0, 3);
-    choices = shuffle(words.concat(extra)); // 같은 주제 단어 8개 보기
   } else {
     words = draw(room, 'normal', NORMAL_WORDS, 5);
   }
@@ -144,10 +145,12 @@ function setupRound(room) {
     pickedIdx: null,
     clues: {},        // playerId -> 힌트
     status: {},       // playerId -> 'ok' | 'dup' | 'voted'
-    votes: {},        // playerId(힌트 주인) -> Set(투표자)
+    votes: {},        // playerId(힌트 주인) -> Set(투표자)  [다수결 모드]
+    hostMarks: new Set(), // 방장이 제거하기로 고른 힌트 주인 id  [방장 모드]
+    reviewMode: null, // 'host' | 'vote'
     reviewDone: new Set(),
     guess: null,
-    reactions: {},    // target -> Set(누른 사람)
+    reactions: new Set(), // 술래 답에 감정표현을 누른 사람 (한 번씩만)
   };
   room.phase = 'pick';
   clearTimer(room);
@@ -161,7 +164,14 @@ function startGame(room) {
 }
 
 function pickWord(room, idx) {
-  room.r.pickedIdx = idx;
+  const r = room.r;
+  r.pickedIdx = idx;
+  if (room.settings.mode === 'easy') {
+    // 정답 1개 + 같은 주제의 다른 단어 5개 = 보기 6개
+    const answer = r.words[idx];
+    const others = shuffle(EASY_TOPICS[r.topic].words.filter((w) => w !== answer)).slice(0, EASY_CHOICES - 1);
+    r.choices = shuffle([answer, ...others]);
+  }
   room.phase = 'clue';
   setTimer(room, room.settings.clueTime, () => endClue(room));
 }
@@ -171,12 +181,15 @@ function endClue(room) {
   const r = room.r;
   // 1) 똑같은 힌트 자동 제거
   const count = {};
-  for (const t of Object.values(r.clues)) count[norm(t)] = (count[norm(t)] || 0) + 1;
-  for (const [pid, t] of Object.entries(r.clues)) r.status[pid] = count[norm(t)] > 1 ? 'dup' : 'ok';
+  for (const t of Object.values(r.clues)) count[key(t)] = (count[key(t)] || 0) + 1;
+  for (const [pid, t] of Object.entries(r.clues)) r.status[pid] = count[key(t)] > 1 ? 'dup' : 'ok';
   const okCount = Object.values(r.status).filter((s) => s === 'ok').length;
   // 2) 힌트 주는 사람이 2명 이상이면 비슷한 힌트 검토(투표) 단계
   if (givers(room).length >= 2 && okCount >= 1) {
     room.phase = 'review';
+    // 방장이 직접 검토. 단, 방장이 술래이거나 접속이 끊겼으면 다수결 투표
+    const host = getPlayer(room, room.hostId);
+    r.reviewMode = host && host.connected && host.id !== r.guesserId ? 'host' : 'vote';
     setTimer(room, REVIEW_SECONDS, () => endReview(room));
   } else {
     clearTimer(room);
@@ -193,15 +206,20 @@ function endReview(room) {
   const r = room.r;
   const total = voterCount(room);
   for (const [pid, st] of Object.entries(r.status)) {
-    const v = r.votes[pid] ? r.votes[pid].size : 0;
-    if (st === 'ok' && v * 2 > total) r.status[pid] = 'voted'; // 과반수 찬성 → 제거
+    if (st !== 'ok') continue;
+    if (r.reviewMode === 'host') {
+      if (r.hostMarks.has(pid)) r.status[pid] = 'voted'; // 방장이 제거
+    } else {
+      const v = r.votes[pid] ? r.votes[pid].size : 0;
+      if (v * 2 > total) r.status[pid] = 'voted'; // 과반수 찬성 → 제거
+    }
   }
   clearTimer(room);
   room.phase = 'guess';
 }
 
 function maybeFinishReview(room) {
-  if (room.phase !== 'review') return;
+  if (room.phase !== 'review' || room.r.reviewMode !== 'vote') return;
   const active = givers(room).filter((p) => p.connected);
   if (active.length && active.every((p) => room.r.reviewDone.has(p.id))) endReview(room);
 }
@@ -209,7 +227,7 @@ function maybeFinishReview(room) {
 function submitGuess(room, text, pass) {
   const r = room.r;
   const word = r.words[r.pickedIdx];
-  const success = !pass && norm(text) === norm(word);
+  const success = !pass && key(text) === key(word);
   r.guess = { text: pass ? '' : String(text).trim(), pass: !!pass, success };
   room.history.push({
     round: room.round,
@@ -218,10 +236,12 @@ function submitGuess(room, text, pass) {
     word, topic: r.topic, success, pass: !!pass, guess: r.guess.text,
   });
   room.phase = 'result';
-  clearTimer(room);
+  // 답을 천천히 볼 수 있도록 5초 뒤 자동으로 다음 라운드
+  setTimer(room, RESULT_SECONDS, () => nextRound(room));
 }
 
 function nextRound(room) {
+  if (room.phase !== 'result') return;
   if (room.round >= TOTAL_ROUNDS) return endGame(room, false);
   room.round += 1;
   room.turnPtr += 1;
@@ -274,7 +294,8 @@ function stateFor(room, pid) {
     reviewDone: [...r.reviewDone],
     choices: ph === 'guess' || ph === 'result' ? r.choices : null,
     guess: reveal ? r.guess : null,
-    myReacted: Object.entries(r.reactions).filter(([, set]) => set.has(pid)).map(([k]) => k),
+    myReacted: r.reactions.has(pid),
+    reviewMode: r.reviewMode,
     clues: null,
   };
   const item = (cid) => ({
@@ -283,6 +304,7 @@ function stateFor(room, pid) {
     status: r.status[cid] || 'ok',
     votes: r.votes[cid] ? r.votes[cid].size : 0,
     myVote: !!(r.votes[cid] && r.votes[cid].has(pid)),
+    marked: r.hostMarks.has(cid),
   });
   if (ph === 'review' && !isG) g.clues = Object.keys(r.clues).map(item);
   if (ph === 'guess') {
@@ -467,15 +489,25 @@ io.on('connection', (socket) => {
 
   on('vote', true, (d, room, me) => {
     const r = room.r;
-    if (room.phase !== 'review' || r.guesserId === me.id) return { error: '지금은 투표할 수 없어요.' };
-    if (r.status[d.target] !== 'ok') return { error: '투표할 수 없는 힌트예요.' };
+    if (room.phase !== 'review' || r.guesserId === me.id) return { error: '지금은 고를 수 없어요.' };
+    if (r.status[d.target] !== 'ok') return { error: '고를 수 없는 힌트예요.' };
+    if (r.reviewMode === 'host') {
+      if (room.hostId !== me.id) return { error: '이번 검토는 방장만 고를 수 있어요.' };
+      if (r.hostMarks.has(d.target)) r.hostMarks.delete(d.target); else r.hostMarks.add(d.target);
+      return;
+    }
     const set = r.votes[d.target] || (r.votes[d.target] = new Set());
     if (set.has(me.id)) set.delete(me.id); else set.add(me.id);
   });
 
   on('reviewDone', true, (d, room, me) => {
-    if (room.phase !== 'review' || room.r.guesserId === me.id) return { error: '지금은 할 수 없어요.' };
-    room.r.reviewDone.add(me.id);
+    const r = room.r;
+    if (room.phase !== 'review' || r.guesserId === me.id) return { error: '지금은 할 수 없어요.' };
+    if (r.reviewMode === 'host') {
+      if (room.hostId !== me.id) return { error: '방장만 검토를 끝낼 수 있어요.' };
+      return endReview(room);
+    }
+    r.reviewDone.add(me.id);
     maybeFinishReview(room);
   });
 
@@ -489,33 +521,13 @@ io.on('connection', (socket) => {
     submitGuess(room, text.slice(0, 20), false);
   });
 
-  on('next', true, (d, room) => {
-    if (room.phase !== 'result' || Number(d.round) !== room.round) return; // 중복 클릭 무시
-    nextRound(room);
-  });
-
   on('react', true, (d, room, me) => {
     const r = room.r;
-    if (!r || !(room.phase === 'guess' || room.phase === 'result')) return { error: '지금은 반응할 수 없어요.' };
+    if (!r || room.phase !== 'result' || !r.guess) return { error: '술래의 답이 나왔을 때만 누를 수 있어요.' };
     if (!EMOJIS.includes(d.emoji)) return { error: '잘못된 이모티콘이에요.' };
-    const target = String(d.target || '');
-    let hiddenFromGuesser = false;
-    if (target === 'guess') {
-      if (room.phase !== 'result' || !r.guess) return { error: '반응할 수 없어요.' };
-    } else if (target.startsWith('hint:')) {
-      const hid = target.slice(5);
-      if (!r.clues[hid]) return { error: '반응할 수 없어요.' };
-      hiddenFromGuesser = room.phase === 'guess' && r.status[hid] !== 'ok';
-      if (hiddenFromGuesser && me.id === r.guesserId) return { error: '반응할 수 없어요.' };
-    } else return { error: '반응할 수 없어요.' };
-    const set = r.reactions[target] || (r.reactions[target] = new Set());
-    if (set.has(me.id)) return { error: '답변마다 한 번만 누를 수 있어요.' };
-    set.add(me.id);
-    for (const p of room.players) {
-      if (!p.connected || !p.socketId) continue;
-      if (hiddenFromGuesser && p.id === r.guesserId) continue;
-      io.to(p.socketId).emit('reaction', { target, emoji: d.emoji, pid: me.id });
-    }
+    if (r.reactions.has(me.id)) return { error: '답변마다 한 번만 누를 수 있어요.' };
+    r.reactions.add(me.id);
+    io.to(room.code).emit('reaction', { emoji: d.emoji, pid: me.id });
   });
 
   // ----- 방장 도구 -----
@@ -523,6 +535,7 @@ io.on('connection', (socket) => {
     if (room.hostId !== me.id) return { error: '방장만 할 수 있어요.' };
     if (room.phase === 'clue') endClue(room);
     else if (room.phase === 'review') endReview(room);
+    else if (room.phase === 'result') nextRound(room);
     else return { error: '지금은 쓸 수 없어요.' };
   });
 

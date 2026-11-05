@@ -115,6 +115,7 @@ input.txt:focus{box-shadow:0 0 0 4px rgba(255,143,177,.45)}
 /* 타이머 */
 .timer{position:relative;height:30px;border:3px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;margin-bottom:12px}
 .timer .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#8fe3a1,#b9f0a8);transition:width .2s linear}
+.timer.rest .bar{background:linear-gradient(90deg,#a9dcff,#d9c8ff)}
 .timer.hurry .bar{background:linear-gradient(90deg,#ff8f8f,#ffb3b3)}
 .timer .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px}
 .timer.hurry .num{animation:shake .4s infinite}
@@ -162,7 +163,12 @@ input.txt:focus{box-shadow:0 0 0 4px rgba(255,143,177,.45)}
 .rx{display:flex;justify-content:center;gap:3px;margin-top:5px}
 .rx button{border:2px solid var(--ink);background:#fff;border-radius:10px;font-size:18px;padding:2px 3px;line-height:1;cursor:pointer}
 .rx button:active{transform:scale(.85)}
-.rxdone{font-size:11px;opacity:.6;margin-top:5px}
+.rxdone{font-size:14px;opacity:.7;margin-top:8px}
+.rx.big{gap:8px;margin-top:10px}
+.rx.big button{font-size:30px;padding:6px 8px;border-width:3px;border-radius:14px;box-shadow:0 3px 0 var(--ink)}
+.hint .mk{position:absolute;top:-10px;right:-8px;background:#ff6b81;color:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 8px;font-size:13px}
+.reviewer{display:flex;align-items:center;justify-content:center;gap:6px;font-size:16px;margin:4px 0 8px}
+.reviewer .ch{width:34px;height:34px}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .choice{border:3px solid var(--ink);border-radius:16px;background:#fff;font-size:20px;padding:12px 6px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
 .choice.sel{background:var(--pink);transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
@@ -360,17 +366,19 @@ const norm = (s) => String(s || '').replace(/\s+/g, '');
 // 서버와 같은 힌트 검사 (바로 안내하기 위해)
 function validateClue(raw, word) {
   const t = String(raw || '').trim();
-  const w = norm(word);
+  const lt = t.toLowerCase();
+  const w = norm(word).toLowerCase();
   if (!t) return '힌트를 입력해 주세요.';
   if (/\s/.test(t)) return '띄어쓰기 없이 한 단어로 적어 주세요.';
-  if (t.length > 12) return '힌트는 12글자까지 쓸 수 있어요.';
-  if (/[a-zA-Zａ-ｚＡ-Ｚ]/.test(t)) return '영어는 쓸 수 없어요.';
+  if (t.length > 15) return '힌트는 15글자까지 쓸 수 있어요.';
   if (/[0-9０-９]/.test(t)) return '숫자는 쓸 수 없어요.';
   if (/[ㄱ-ㅎㅏ-ㅣ]/.test(t)) return '자음·모음만 따로 쓸 수 없어요. (예: ㅋㅋ, ㅠㅠ)';
-  if (!/^[가-힣]+$/.test(t)) return '한글 단어만 쓸 수 있어요. (특수문자·이모티콘·한자 불가)';
-  if (t.includes(w)) return '정답 단어가 들어간 힌트는 쓸 수 없어요.';
-  if (w.includes(t)) return '정답 단어의 일부는 힌트로 쓸 수 없어요.';
-  for (let i = 0; i < t.length - 1; i++) if (w.includes(t.substr(i, 2))) return '정답과 두 글자 이상 겹치는 합성어는 쓸 수 없어요.';
+  if (!/^[가-힣a-zA-Z]+$/.test(t)) return '한글이나 영어 단어만 쓸 수 있어요. (특수문자·이모티콘·한자 불가)';
+  if (lt.includes(w)) return '정답 단어가 들어간 힌트는 쓸 수 없어요.';
+  if (w.includes(lt)) return '정답 단어의 일부는 힌트로 쓸 수 없어요.';
+  for (let i = 0; i < lt.length - 1; i++) {
+    if (/[가-힣]{2}/.test(lt.substr(i, 2)) && w.includes(lt.substr(i, 2))) return '정답과 두 글자 이상 겹치는 합성어는 쓸 수 없어요.';
+  }
   return null;
 }
 
@@ -612,7 +620,7 @@ function renderLobby() {
     <div class="seg">${modeBtn('normal', '🌟 일반모드', '정답을 직접 입력')}${modeBtn('easy', '🧸 이지모드', '주제별 · 보기에서 고르기')}</div>
     <div class="tiny">✍️ 힌트 쓰는 시간</div>
     <div class="seg">${CLUE_TIMES.map((t) => `<button class="segbtn ${st.clueTime === t ? 'on' : ''}" data-act="time" data-t="${t}" ${isHost ? '' : 'disabled'}>${t}초</button>`).join('')}</div>
-    <div class="tiny">🔍 비슷한 힌트 검토 시간: 12초 (고정)</div>
+    <div class="tiny">🔍 비슷한 힌트 검토: 12초 · 방장이 직접 골라요 (방장이 술래면 다수결)</div>
   </div>
   ${isHost
     ? `<button class="btn big green" data-act="start" ${S.players.length < 2 ? 'disabled' : ''}>🎮 게임 시작!</button>`
@@ -621,23 +629,30 @@ function renderLobby() {
 }
 
 // ---------- 공통 조각 ----------
+// opts.vote: 내가 이 힌트를 눌러 고를 수 있는지 / opts.review: 검토 화면인지
 function hintCard(c, opts = {}) {
   const p = P(c.pid);
-  const label = { dup: '👯 똑같은 힌트', voted: '🚫 투표로 제거', none: '⏰ 시간 초과' }[c.status];
-  const target = 'hint:' + c.pid;
-  const canReact = opts.react && c.status !== 'none';
-  const reacted = S.game.myReacted.includes(target);
-  return `<div class="hint ${c.status} ${opts.vote && c.status === 'ok' ? 'vote' : ''} ${c.myVote ? 'myvote' : ''}"
-      style="--c:${CHARS[p.charId].color}" data-target="${target}" ${opts.vote && c.status === 'ok' ? `data-act="vote" data-id="${c.pid}"` : ''}>
-    ${opts.vote && c.votes ? `<div class="vc">🚫 ${c.votes}</div>` : ''}
+  const g = S.game;
+  const removedLabel = g.reviewMode === 'host' ? '🚫 방장이 제거' : '🚫 투표로 제거';
+  const label = { dup: '👯 똑같은 힌트', voted: removedLabel, none: '⏰ 시간 초과' }[c.status];
+  const hostMode = g.reviewMode === 'host';
+  const picked = opts.review && c.status === 'ok' && (hostMode ? c.marked : c.myVote);
+  const clickable = opts.vote && c.status === 'ok';
+  let badge = '';
+  if (opts.review && c.status === 'ok') {
+    if (hostMode && c.marked) badge = '<div class="mk">🚫 제거</div>';
+    else if (!hostMode && c.votes) badge = `<div class="vc">🚫 ${c.votes}</div>`;
+  }
+  return `<div class="hint ${c.status} ${clickable ? 'vote' : ''} ${picked ? 'myvote' : ''}"
+      style="--c:${CHARS[p.charId].color}" ${clickable ? `data-act="vote" data-id="${c.pid}"` : ''}>
+    ${badge}
     <div class="who">${charSVG(p.charId)}${esc(p.name)}</div>
     <div class="ht">${c.text == null ? '(힌트 없음)' : esc(c.text)}</div>
     ${label ? `<span class="tag">${label}</span>` : ''}
-    ${canReact ? (reacted ? `<div class="rxdone">반응 완료 ✓</div>` : reactBar(target)) : ''}
   </div>`;
 }
-function reactBar(target) {
-  return `<div class="rx">${EMO.map((e) => `<button title="${e.t}" data-act="react" data-target="${target}" data-e="${e.k}">${e.e}</button>`).join('')}</div>`;
+function reactBar() {
+  return `<div class="rx big">${EMO.map((e) => `<button title="${e.t}" data-act="react" data-e="${e.k}">${e.e}</button>`).join('')}</div>`;
 }
 function timerHTML() { return `<div class="timer" id="timer"><div class="bar" id="tbar"></div><div class="num" id="tnum"></div></div>`; }
 
@@ -653,7 +668,7 @@ function renderGame() {
     viewKey = key;
     selChoice = null;
     app.innerHTML = `<div class="hud" id="hud"></div><div class="strip" id="strip"></div>
-      ${S.phase === 'clue' || S.phase === 'review' ? timerHTML() : ''}
+      ${['clue', 'review', 'result'].includes(S.phase) ? timerHTML() : ''}
       <div class="card">${stageHTML(isG, mySub, myDone)}</div>`;
     const inp = $('#clueIn') || $('#guessIn');
     if (inp) setTimeout(() => inp.focus(), 50);
@@ -667,7 +682,10 @@ function renderGame() {
     let st = '';
     if (p.id === g.guesserId) st = '🎯술래';
     else if (S.phase === 'clue') st = g.submitted.includes(p.id) ? '✅' : '✍️';
-    else if (S.phase === 'review') st = g.reviewDone.includes(p.id) ? '✅' : '🔍';
+    else if (S.phase === 'review') {
+      if (g.reviewMode === 'host') st = p.id === S.hostId ? '🔍' : '👀';
+      else st = g.reviewDone.includes(p.id) ? '✅' : '🔍';
+    }
     return `<div class="chip ${p.connected ? '' : 'off'} ${p.id === g.guesserId ? 'guesser' : ''}" style="--c:${CHARS[p.charId].color}">
       ${charSVG(p.charId)}${esc(p.name)}<span class="st">${st}${p.connected ? '' : '💤'}</span></div>`;
   }).join('');
@@ -695,22 +713,35 @@ function stageHTML(isG, mySub, myDone) {
         <div class="hints" style="grid-template-columns:1fr">${hintCard({ pid: S.myId, text: g.myClue, status: 'ok' })}</div>
         <div class="desc">다른 친구들을 기다리는 중<span class="dots"></span></div><div id="dyn"></div>`;
       return `<div class="big-title">✍️ ${gName}님에게 줄 힌트!</div>${wordBox()}
-        <input id="clueIn" class="txt" maxlength="12" placeholder="한 단어 힌트" autocomplete="off">
+        <input id="clueIn" class="txt" maxlength="15" placeholder="한 단어 힌트 (한글/영어)" autocomplete="off" autocapitalize="off">
         <div class="err" id="clueErr"></div>
         <button class="btn big pink" data-act="clue" id="clueBtn">힌트 보내기 💌</button>
-        <div class="note">📌 <b>한글 한 단어</b>만! 영어·숫자·특수문자·ㅋㅋ 같은 글자는 안 돼요.<br>
+        <div class="note">📌 <b>한글이나 영어로 한 단어</b>만! 숫자·특수문자·ㅋㅋ 같은 글자는 안 돼요.<br>
         📌 정답 단어나 정답 일부가 들어간 말(합성어)도 안 돼요.<br>
         📌 다른 사람과 <b>똑같은 힌트</b>를 쓰면 둘 다 지워져요!</div><div id="dyn"></div>`;
-    case 'review':
-      if (isG) return `<div class="big-title">🔍 친구들이 힌트를 검토 중</div>
+    case 'review': {
+      const hostMode = g.reviewMode === 'host';
+      const host = P(S.hostId);
+      const amHost = S.hostId === S.myId;
+      if (isG) return `<div class="big-title">🔍 힌트를 검토하고 있어요</div>
         <div class="bigchar bob">${charSVG(P(S.myId).charId)}</div>
-        <div class="desc">비슷한 힌트를 골라내고 있어요. 잠시만 기다려 주세요<span class="dots"></span></div>`;
-      return `<div class="big-title">🔍 비슷한 힌트 골라내기</div>${wordBox()}
-        <div class="note">👆 아래 힌트 중에서 <b>뜻이 겹치는 힌트</b>(예: 과일 / 과일들)나 <b>단어가 아닌 힌트</b>(예: 아무 글자)를 눌러 제거에 투표하세요.<br>
-        다시 누르면 투표가 취소돼요. <b>과반수</b>가 찬성하면 술래에게 보이지 않아요.</div>
+        <div class="desc">${hostMode ? `👑 방장 ${esc(host.name)}님이` : '친구들이 투표로'} 비슷한 힌트를 골라내는 중이에요<span class="dots"></span></div>`;
+      const guide = `<b>뜻이 겹치는 힌트</b>(예: 과일 / 과일들)나 <b>단어가 아닌 힌트</b>(예: 아무렇게 친 글자)는 제거해 주세요.`;
+      if (hostMode && amHost) return `<div class="big-title">👑 방장님, 힌트를 검토해 주세요!</div>${wordBox()}
+        <div class="note">👆 ${guide}<br>제거할 힌트를 누르면 <b>🚫 제거</b> 표시가 붙고, 다시 누르면 취소돼요. 표시된 힌트는 술래에게 보이지 않아요.</div>
+        <div id="dyn"></div>
+        <button class="btn green" data-act="reviewDone">👍 검토 끝! 술래에게 보여주기</button>`;
+      if (hostMode) return `<div class="big-title">👀 방장이 힌트를 검토 중</div>${wordBox()}
+        <div class="reviewer">${charSVG(host.charId)}👑 ${esc(host.name)}님이 고르고 있어요<span class="dots"></span></div>
+        <div class="note">방장이 ${guide.replace('제거해 주세요.', '제거해요.')} <b>🚫 제거</b> 표시가 붙은 힌트는 술래에게 보이지 않아요.</div>
+        <div id="dyn"></div>`;
+      return `<div class="big-title">🔍 다수결로 힌트 골라내기</div>${wordBox()}
+        <div class="note">👑 방장이 술래라서 이번에는 <b>다수결</b>로 정해요.<br>👆 ${guide}<br>
+        제거할 힌트를 눌러 투표하세요. 다시 누르면 취소돼요. <b>과반수</b>가 찬성하면 술래에게 보이지 않아요.</div>
         <div id="dyn"></div>
         ${myDone ? `<div class="desc mt">✅ 검토 완료! 다른 친구들을 기다리는 중<span class="dots"></span></div>`
           : `<button class="btn green" data-act="reviewDone">👍 검토 완료</button>`}`;
+    }
     case 'guess':
       if (isG) {
         const input = S.settings.mode === 'easy'
@@ -732,7 +763,7 @@ function stageHTML(isG, mySub, myDone) {
       return `<div class="banner ${ok ? 'win' : 'lose'}">${ok ? '🎉 정답이에요!' : g.guess && g.guess.pass ? '🙈 패스했어요' : '😢 아쉬워요!'}</div>
         <div class="answer"><div class="lbl">정답</div><div class="w">${esc(g.word)}</div></div>
         <div id="dyn"></div>
-        <button class="btn big ${last ? 'yellow' : 'sky'}" data-act="next">${last ? '🏁 최종 결과 보기' : '다음 라운드 ▶'}</button>`;
+        <div class="desc mt">${last ? '🏁 잠시 후 최종 결과가 나와요' : '⏳ 잠시 후 다음 라운드로 넘어가요'}</div>`;
     }
   }
   return '';
@@ -745,16 +776,18 @@ function updateDyn(isG, gName) {
     dyn.innerHTML = `<div class="desc mt">힌트 제출 ${g.submitted.length}/${g.givers.length}</div>`;
   }
   if (S.phase === 'review' && dyn && g.clues) {
-    dyn.innerHTML = `<div class="tiny center mt">참여 인원 ${g.voterCount}명 → ${Math.floor(g.voterCount / 2) + 1}표 이상이면 제거</div>
-      <div class="hints">${g.clues.map((c) => hintCard(c, { vote: true })).join('')}</div>`;
+    const hostMode = g.reviewMode === 'host';
+    const canPick = hostMode ? S.hostId === S.myId : true;
+    dyn.innerHTML = `${hostMode ? '' : `<div class="tiny center mt">참여 인원 ${g.voterCount}명 → ${Math.floor(g.voterCount / 2) + 1}표 이상이면 제거</div>`}
+      <div class="hints">${g.clues.map((c) => hintCard(c, { vote: canPick, review: true })).join('')}</div>`;
   }
   if (S.phase === 'guess' && dyn) {
     const list = g.clues || [];
     const visible = list.filter((c) => c.status === 'ok');
     dyn.innerHTML = isG
-      ? (visible.length ? `<div class="hints">${visible.map((c) => hintCard(c, { react: true })).join('')}</div>`
+      ? (visible.length ? `<div class="hints">${visible.map((c) => hintCard(c)).join('')}</div>`
         : `<div class="desc">😱 남은 힌트가 하나도 없어요! 감으로 맞혀보세요!</div>`)
-      : `<div class="tiny">술래에게는 회색 힌트가 보이지 않아요</div><div class="hints">${list.map((c) => hintCard(c, { react: true })).join('')}</div>`;
+      : `<div class="tiny">술래에게는 회색 힌트가 보이지 않아요</div><div class="hints">${list.map((c) => hintCard(c)).join('')}</div>`;
     const box = $('#choices');
     if (box && g.choices) {
       box.innerHTML = g.choices.map((c) => `<button class="choice ${selChoice === c ? 'sel' : ''}" data-act="choose" data-w="${esc(c)}">${esc(c)}</button>`).join('');
@@ -763,14 +796,15 @@ function updateDyn(isG, gName) {
   }
   if (S.phase === 'result' && dyn) {
     const gs = g.guess;
-    const reacted = g.myReacted.includes('guess');
+    const reacted = g.myReacted;
     const ans = gs.pass ? '패스 🙈' : esc(gs.text);
     dyn.innerHTML = `<div class="guesscard" data-target="guess">
         <div class="tiny">${esc(gName)}님의 답</div>
         <div class="gw">${ans} ${gs.success ? '⭕' : '❌'}</div>
-        ${reacted ? '<div class="rxdone">반응 완료 ✓</div>' : reactBar('guess')}
+        ${reacted ? '<div class="rxdone">반응 완료 ✓</div>' : `<div class="tiny mt">이 답에 감정표현을 보내보세요! (한 번만)</div>${reactBar()}`}
       </div>
-      <div class="hints">${(g.clues || []).map((c) => hintCard(c, { react: true })).join('')}</div>`;
+      ${g.choices ? `<div class="tiny">보기</div><div class="choices" style="margin-bottom:10px">${g.choices.map((c) => `<button class="choice ${c === g.word ? 'right' : ''} ${c === gs.text && !gs.success ? 'sel' : ''}" disabled>${esc(c)}</button>`).join('')}</div>` : ''}
+      <div class="hints">${(g.clues || []).map((c) => hintCard(c)).join('')}</div>`;
   }
 }
 
@@ -782,11 +816,16 @@ function updateTimer() {
   const pct = S.phaseDuration ? Math.min(100, (remain / S.phaseDuration) * 100) : 0;
   $('#tbar').style.width = pct + '%';
   const sec = Math.ceil(remain);
-  $('#tnum').textContent = sec > 0 ? `⏰ ${sec}초` : '⏰ 시간 끝!';
-  el.classList.toggle('hurry', sec <= 5);
+  const resting = S.phase === 'result';
+  const last = S.round >= S.totalRounds;
+  $('#tnum').textContent = resting
+    ? (sec > 0 ? `${last ? '🏁 결과 발표까지' : '▶ 다음 라운드까지'} ${sec}초` : '▶ 넘어가는 중…')
+    : (sec > 0 ? `⏰ ${sec}초` : '⏰ 시간 끝!');
+  el.classList.toggle('rest', resting);
+  el.classList.toggle('hurry', !resting && sec <= 5);
   if (sec !== lastTickSec) {
     lastTickSec = sec;
-    if (sec > 0 && sec <= 3) Sound.sfx('tick');
+    if (!resting && sec > 0 && sec <= 3) Sound.sfx('tick');
   }
 }
 setInterval(updateTimer, 200);
@@ -826,7 +865,7 @@ function spawnReaction(d) {
   const emo = EMO.find((e) => e.k === d.emoji);
   if (!emo || !S) return;
   const p = P(d.pid);
-  const el = document.querySelector(`[data-target="${d.target}"]`);
+  const el = document.querySelector('[data-target="guess"]');
   let x = innerWidth / 2, y = innerHeight / 3;
   if (el) {
     const r = el.getBoundingClientRect();
@@ -860,7 +899,7 @@ function confetti() {
 //  방장 메뉴
 // =====================================================
 function openHostMenu() {
-  const canForce = S.phase === 'clue' || S.phase === 'review';
+  const canForce = ['clue', 'review', 'result'].includes(S.phase);
   const m = $('#modal');
   m.innerHTML = `<div class="card">
     <h3>👑 방장 메뉴</h3>
@@ -951,8 +990,7 @@ document.addEventListener('click', (e) => {
     case 'react':
       e.stopPropagation();
       el.parentElement.querySelectorAll('button').forEach((b) => (b.disabled = true)); // 한 번만
-      return emit('react', { target: el.dataset.target, emoji: el.dataset.e });
-    case 'next': return emit('next', { round: S.round });
+      return emit('react', { emoji: el.dataset.e });
     case 'restart': return emit('restart');
     case 'hostmenu': return openHostMenu();
     case 'closeModal': return closeModal();

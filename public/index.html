@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#8fd6ff">
+<title>저스트 원 🌈 다 같이 맞혀요!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#4a3838; --paper:#fffdf6; --pink:#ffb3c9; --sky:#a9dcff; --green:#a8e6a0;
+  --yellow:#ffe58f; --purple:#d9c8ff; --red:#ff9f9f; --shadow:0 5px 0 rgba(74,56,56,.22);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,#7fcfff 0%,#b8e6ff 40%,#e6f8ff 75%,#f3fff0 100%);
+  background-attachment:fixed;overflow-x:hidden;
+}
+button,input{font-family:inherit;color:var(--ink)}
+/* ---------- 배경: 구름 + 언덕 ---------- */
+#sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.cloud{position:absolute;background:#fff;border-radius:100px;opacity:.95;animation:drift linear infinite}
+.cloud::before,.cloud::after{content:'';position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:55%;height:150%;left:12%;top:-70%}
+.cloud::after{width:40%;height:120%;right:12%;top:-50%}
+.c1{width:130px;height:42px;top:9%;animation-duration:60s;left:-160px}
+.c2{width:90px;height:30px;top:24%;animation-duration:85s;animation-delay:-40s;left:-160px}
+.c3{width:160px;height:50px;top:46%;animation-duration:110s;animation-delay:-70s;left:-160px;opacity:.7}
+.c4{width:70px;height:24px;top:62%;animation-duration:75s;animation-delay:-20s;left:-160px;opacity:.8}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 340px))}}
+#hills{position:fixed;left:0;right:0;bottom:0;height:130px;pointer-events:none;z-index:0}
+#hills svg{width:100%;height:100%;display:block}
+
+/* ---------- 레이아웃 ---------- */
+#app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:58px 14px 150px}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:26px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+h2,h3{margin:0 0 10px}
+h2{font-size:24px}
+h3{font-size:19px}
+.tiny{font-size:13px;opacity:.75}
+.center{text-align:center}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.mt{margin-top:12px}
+
+/* ---------- 버튼 ---------- */
+.btn{display:block;width:100%;font-size:19px;border:3px solid var(--ink);border-radius:18px;padding:12px 14px;background:#fff;
+  box-shadow:0 5px 0 var(--ink);cursor:pointer;transition:transform .06s,box-shadow .06s;margin-top:10px}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.big{font-size:22px;padding:15px}
+.btn.small{font-size:15px;padding:8px 12px;width:auto;margin:0;box-shadow:0 3px 0 var(--ink);border-radius:14px}
+.pink{background:var(--pink)}.sky{background:var(--sky)}.green{background:var(--green)}
+.yellow{background:var(--yellow)}.purple{background:var(--purple)}.red{background:var(--red)}
+.ghost{background:rgba(255,255,255,.6);box-shadow:none;border-style:dashed}
+input.txt{width:100%;font-size:20px;border:3px solid var(--ink);border-radius:16px;padding:12px 14px;background:#fff;outline:none}
+input.txt:focus{box-shadow:0 0 0 4px rgba(255,143,177,.45)}
+
+/* ---------- 상단 고정 버튼 ---------- */
+#topbtns{position:fixed;top:10px;right:10px;z-index:30;display:flex;gap:6px}
+#topbtns button{border:3px solid var(--ink);background:#fff;border-radius:999px;padding:5px 11px;font-size:15px;box-shadow:0 3px 0 var(--ink);cursor:pointer}
+#topbtns button.off{opacity:.55;background:#eee}
+
+/* ---------- 홈 ---------- */
+.logo{font-size:52px;text-align:center;color:#fff;letter-spacing:2px;line-height:1.1;margin:6px 0 2px;
+  text-shadow:3px 0 0 var(--ink),-3px 0 0 var(--ink),0 3px 0 var(--ink),0 -3px 0 var(--ink),2px 2px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink),0 7px 0 var(--ink)}
+.logo span{color:#ffd1e0}
+.subtitle{text-align:center;font-size:17px;margin-bottom:8px}
+.parade{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;margin:10px 0 6px}
+.parade .ch{width:52px;height:52px}
+.bob{animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(3deg)}}
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0 4px;font-size:14px;opacity:.7}
+.divider::before,.divider::after{content:'';flex:1;border-top:2px dashed var(--ink)}
+.rules{margin-top:14px;background:#fff6d6;border:2px dashed var(--ink);border-radius:16px;padding:10px 12px;font-size:14px;line-height:1.6}
+
+/* ---------- 대기실 ---------- */
+.lobbyhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.code{font-size:40px;letter-spacing:6px}
+.plist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.prow{display:flex;align-items:center;gap:6px;background:var(--c);border:3px solid var(--ink);border-radius:18px;padding:4px 8px 4px 4px;position:relative;min-width:0}
+.prow .ch{width:40px;height:40px;flex:none}
+.prow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
+.prow.off{opacity:.5}
+.prow .kick{border:2px solid var(--ink);background:#fff;border-radius:10px;font-size:12px;padding:2px 6px;cursor:pointer}
+.chargrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.charbtn{border:3px solid var(--ink);border-radius:18px;background:var(--c);padding:6px 2px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font-size:13px;box-shadow:0 3px 0 var(--ink)}
+.charbtn .ch{width:52px;height:52px}
+.charbtn.mine{outline:4px solid #ff6f9f;outline-offset:2px;transform:translateY(-2px)}
+.charbtn.taken{opacity:.4;filter:grayscale(.6)}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.segbtn{flex:1;min-width:56px;border:3px solid var(--ink);border-radius:14px;background:#fff;padding:9px 4px;font-size:16px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.segbtn.on{background:var(--yellow);transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.segbtn:disabled{cursor:default}
+.segbtn small{display:block;font-size:11px;opacity:.75;margin-top:2px}
+.waiting{text-align:center;padding:14px;font-size:17px}
+.dots::after{content:'';animation:dots 1.4s steps(4) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+
+/* ---------- 게임 상단 ---------- */
+.hud{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.pill{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:4px 12px;font-size:16px;box-shadow:0 3px 0 rgba(74,56,56,.25)}
+.pill.topic{background:var(--yellow)}
+.strip{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{display:flex;align-items:center;gap:3px;background:var(--c);border:2px solid var(--ink);border-radius:999px;padding:2px 9px 2px 2px;font-size:14px;position:relative}
+.chip .ch{width:30px;height:30px}
+.chip.off{opacity:.45}
+.chip.guesser{outline:3px solid #ff6f9f;outline-offset:1px}
+.chip .st{font-size:12px}
+
+/* 타이머 */
+.timer{position:relative;height:30px;border:3px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;margin-bottom:12px}
+.timer .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#8fe3a1,#b9f0a8);transition:width .2s linear}
+.timer.hurry .bar{background:linear-gradient(90deg,#ff8f8f,#ffb3b3)}
+.timer .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px}
+.timer.hurry .num{animation:shake .4s infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+
+/* ---------- 단계별 ---------- */
+.big-title{font-size:23px;text-align:center;margin:2px 0 6px}
+.desc{text-align:center;font-size:15px;opacity:.85;margin-bottom:12px;line-height:1.5}
+.fcards{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:8px 0}
+.fcard{aspect-ratio:3/4;border:3px solid var(--ink);border-radius:14px;cursor:pointer;font-size:30px;display:flex;align-items:center;justify-content:center;
+  background:repeating-linear-gradient(45deg,#ffd3e1 0 8px,#ffe3ec 8px 16px);box-shadow:0 4px 0 var(--ink);transition:transform .15s}
+.fcard:nth-child(2){background:repeating-linear-gradient(45deg,#cfeaff 0 8px,#e3f3ff 8px 16px)}
+.fcard:nth-child(3){background:repeating-linear-gradient(45deg,#fff0b8 0 8px,#fff7d6 8px 16px)}
+.fcard:nth-child(4){background:repeating-linear-gradient(45deg,#d2f3c9 0 8px,#e6fadf 8px 16px)}
+.fcard:nth-child(5){background:repeating-linear-gradient(45deg,#e5dbff 0 8px,#f0eaff 8px 16px)}
+.fcard:hover{transform:translateY(-4px) rotate(-2deg)}
+.fcard span{background:#fff;border:3px solid var(--ink);border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center}
+.wlist{display:flex;flex-direction:column;gap:6px}
+.witem{display:flex;align-items:center;gap:10px;border:3px solid var(--ink);border-radius:14px;padding:7px 12px;background:#fff;font-size:19px}
+.witem b{width:28px;height:28px;border-radius:50%;background:var(--yellow);border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:normal}
+.witem.sel{background:#ffe0ea;transform:scale(1.03)}
+.witem.dim{opacity:.4}
+.answer{text-align:center;margin:6px 0 12px}
+.answer .lbl{font-size:14px;opacity:.75}
+.answer .w{display:inline-block;font-size:38px;background:#fff;border:3px solid var(--ink);border-radius:18px;padding:6px 22px;box-shadow:0 5px 0 var(--ink);margin-top:4px;transform:rotate(-1.5deg)}
+.note{background:#fff6d6;border:2px dashed var(--ink);border-radius:14px;padding:9px 11px;font-size:14px;line-height:1.55;margin-top:10px}
+.err{color:#e0405e;min-height:20px;font-size:15px;margin-top:6px;text-align:center}
+.bigchar{display:flex;justify-content:center;margin:8px 0}
+.bigchar .ch{width:110px;height:110px}
+
+/* 힌트 카드 */
+.hints{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.hint{position:relative;background:var(--c);border:3px solid var(--ink);border-radius:20px;padding:8px 8px 6px;text-align:center;box-shadow:0 4px 0 rgba(74,56,56,.3);animation:popin .35s cubic-bezier(.3,1.6,.6,1)}
+@keyframes popin{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.hint .who{display:flex;align-items:center;justify-content:center;gap:3px;font-size:13px}
+.hint .who .ch{width:26px;height:26px}
+.hint .ht{font-size:27px;margin:4px 0;word-break:keep-all;overflow-wrap:anywhere}
+.hint .tag{display:inline-block;font-size:12px;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 8px}
+.hint.dup,.hint.voted,.hint.none{background:#e9e4e4}
+.hint.dup .ht,.hint.voted .ht{text-decoration:line-through;text-decoration-thickness:3px;opacity:.6}
+.hint.none .ht{font-size:18px;opacity:.6}
+.hint.vote{cursor:pointer}
+.hint.vote.myvote{outline:4px solid #ff4d6d;outline-offset:2px}
+.hint .vc{position:absolute;top:-10px;right:-8px;background:#ff6b81;color:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 8px;font-size:14px}
+.rx{display:flex;justify-content:center;gap:3px;margin-top:5px}
+.rx button{border:2px solid var(--ink);background:#fff;border-radius:10px;font-size:18px;padding:2px 3px;line-height:1;cursor:pointer}
+.rx button:active{transform:scale(.85)}
+.rxdone{font-size:11px;opacity:.6;margin-top:5px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.choice{border:3px solid var(--ink);border-radius:16px;background:#fff;font-size:20px;padding:12px 6px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+.choice.sel{background:var(--pink);transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.choice.right{background:var(--green)}
+.choice:disabled{cursor:default}
+
+/* 결과 */
+.banner{text-align:center;font-size:34px;padding:8px;border:3px solid var(--ink);border-radius:20px;margin-bottom:10px;animation:popin .5s cubic-bezier(.3,1.6,.6,1)}
+.banner.win{background:linear-gradient(135deg,#bff3b5,#fff3a8)}
+.banner.lose{background:linear-gradient(135deg,#ffd0d8,#e5dbff)}
+.guesscard{position:relative;background:#fff;border:3px solid var(--ink);border-radius:18px;padding:10px;text-align:center;margin-bottom:8px}
+.guesscard .gw{font-size:26px}
+
+/* 종료 */
+.score{font-size:76px;text-align:center;line-height:1;margin:6px 0;color:#fff;
+  text-shadow:3px 0 0 var(--ink),-3px 0 0 var(--ink),0 3px 0 var(--ink),0 -3px 0 var(--ink),2px 2px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink),0 7px 0 var(--ink)}
+.score small{font-size:30px}
+.endmsg{text-align:center;font-size:22px;background:#fff6d6;border:3px solid var(--ink);border-radius:18px;padding:12px;margin:10px 0}
+.hist{width:100%;border-collapse:collapse;font-size:15px}
+.hist td{padding:6px 4px;border-bottom:2px dashed rgba(74,56,56,.25);text-align:center}
+
+/* 방장 도구 */
+#hostfab{position:fixed;left:12px;bottom:14px;z-index:25;border:3px solid var(--ink);background:var(--yellow);border-radius:999px;padding:9px 14px;font-size:16px;box-shadow:0 4px 0 var(--ink);cursor:pointer;display:none}
+#modal{position:fixed;inset:0;background:rgba(40,30,30,.45);z-index:40;display:none;align-items:flex-end;justify-content:center;padding:14px}
+#modal.show{display:flex}
+#modal .card{width:100%;max-width:480px;animation:popin .3s}
+
+/* 효과 레이어 */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.bubble{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;animation:bubble 3s ease-out forwards}
+.bubble .be{font-size:46px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.15))}
+.bubble .bn{font-size:12px;border:2px solid var(--ink);border-radius:999px;padding:1px 7px;background:#fff;white-space:nowrap}
+@keyframes bubble{0%{transform:translate(-50%,-30%) scale(.3);opacity:0}12%{transform:translate(-50%,-60%) scale(1.25);opacity:1}25%{transform:translate(-50%,-70%) scale(1)}80%{opacity:1}100%{transform:translate(-50%,-160%) scale(.9);opacity:0}}
+.confetti{position:absolute;top:-30px;font-size:24px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:all .25s;z-index:60;max-width:90vw;text-align:center;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#overlayMsg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:45;background:rgba(255,255,255,.6);font-size:20px}
+#overlayMsg.show{display:flex}
+</style>
+</head>
+<body>
+<div id="sky"><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="cloud c4"></div></div>
+<div id="hills">
+  <svg viewBox="0 0 400 130" preserveAspectRatio="none">
+    <path d="M0 70 Q60 30 130 60 T260 55 T400 50 V130 H0Z" fill="#9fdc86" stroke="#4a3838" stroke-width="2.5"/>
+    <path d="M0 95 Q80 60 170 88 T330 80 T400 82 V130 H0Z" fill="#7fcd6c" stroke="#4a3838" stroke-width="2.5"/>
+    <g stroke="#4a3838" stroke-width="1.5">
+      <circle cx="40" cy="105" r="5" fill="#ff9fb8"/><circle cx="40" cy="105" r="2" fill="#ffe36e"/>
+      <circle cx="110" cy="112" r="5" fill="#fff"/><circle cx="110" cy="112" r="2" fill="#ffe36e"/>
+      <circle cx="200" cy="104" r="5" fill="#ffd36e"/><circle cx="200" cy="104" r="2" fill="#ff8f6e"/>
+      <circle cx="275" cy="113" r="5" fill="#c9b5ff"/><circle cx="275" cy="113" r="2" fill="#ffe36e"/>
+      <circle cx="350" cy="104" r="5" fill="#ff9fb8"/><circle cx="350" cy="104" r="2" fill="#ffe36e"/>
+      <circle cx="160" cy="76" r="4" fill="#fff"/><circle cx="300" cy="70" r="4" fill="#ffd36e"/><circle cx="70" cy="62" r="4" fill="#c9b5ff"/>
+    </g>
+  </svg>
+</div>
+<div id="topbtns"><button id="bgmBtn">🎵 음악</button><button id="sfxBtn">🔔 효과음</button></div>
+<main id="app"></main>
+<button id="hostfab" data-act="hostmenu">👑 방장 메뉴</button>
+<div id="modal"></div>
+<div id="fx"></div>
+<div id="toast"></div>
+<div id="overlayMsg"><div class="card center">🔌 다시 연결하는 중<span class="dots"></span></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+'use strict';
+// =====================================================
+//  캐릭터 (오리지널 SVG 캐릭터 8종)
+// =====================================================
+const CHARS = [
+  { name: '삐약이', color: '#FFE58A' },
+  { name: '개굴이', color: '#BDEB9A' },
+  { name: '꿀꿀이', color: '#FFC2D3' },
+  { name: '펭펭이', color: '#B5DCFF' },
+  { name: '콩콩이', color: '#FFCB98' },
+  { name: '몽실이', color: '#DCCEFF' },
+  { name: '쭈꾸미', color: '#FFADAD' },
+  { name: '퐁당이', color: '#A6EBDB' },
+];
+const INK = '#4a3838';
+function face(cx, cy, opt = {}) {
+  const dx = opt.dx || 12;
+  let s = '';
+  for (const sx of [-1, 1]) {
+    s += `<ellipse cx="${cx + sx * dx}" cy="${cy}" rx="3.8" ry="4.6" fill="${INK}"/>`;
+    s += `<circle cx="${cx + sx * dx - 1.2}" cy="${cy - 1.8}" r="1.4" fill="#fff"/>`;
+    s += `<ellipse cx="${cx + sx * (dx + 8)}" cy="${cy + 8}" rx="6" ry="3.4" fill="#ff8fa8" opacity=".6"/>`;
+  }
+  if (opt.mouth !== false) s += `<path d="M${cx - 5} ${cy + 7} q2.5 3.5 5 0 q2.5 3.5 5 0" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/>`;
+  return s;
+}
+const ST = `stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"`;
+function charSVG(id) {
+  let b = '';
+  switch (id) {
+    case 0: // 병아리
+      b = `<path d="M45 22 q3 -12 9 -2 M51 21 q8 -10 10 1" fill="none" ${ST} stroke-linecap="round"/>
+        <circle cx="50" cy="57" r="36" fill="#FFE27A" ${ST}/>
+        <ellipse cx="17" cy="64" rx="7" ry="11" fill="#FFD447" ${ST} transform="rotate(25 17 64)"/>
+        <ellipse cx="83" cy="64" rx="7" ry="11" fill="#FFD447" ${ST} transform="rotate(-25 83 64)"/>
+        ${face(50, 52, { mouth: false })}<path d="M44 60 L56 60 L50 67 Z" fill="#FF9F43" ${ST}/>`;
+      break;
+    case 1: // 개구리
+      b = `<circle cx="31" cy="31" r="13" fill="#A8DE80" ${ST}/><circle cx="69" cy="31" r="13" fill="#A8DE80" ${ST}/>
+        <ellipse cx="50" cy="61" rx="40" ry="31" fill="#A8DE80" ${ST}/>
+        <circle cx="31" cy="31" r="11" fill="#A8DE80"/><circle cx="69" cy="31" r="11" fill="#A8DE80"/>
+        <circle cx="31" cy="31" r="7" fill="#fff" ${ST.replace('3.5', '2')}/><circle cx="69" cy="31" r="7" fill="#fff" ${ST.replace('3.5', '2')}/>
+        <circle cx="31" cy="32" r="3.6" fill="${INK}"/><circle cx="69" cy="32" r="3.6" fill="${INK}"/>
+        <ellipse cx="24" cy="62" rx="6" ry="3.4" fill="#ff8fa8" opacity=".6"/><ellipse cx="76" cy="62" rx="6" ry="3.4" fill="#ff8fa8" opacity=".6"/>
+        <path d="M37 60 q13 12 26 0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
+      break;
+    case 2: // 돼지
+      b = `<path d="M20 34 L26 10 L44 24 Z" fill="#FFA8C0" ${ST}/><path d="M80 34 L74 10 L56 24 Z" fill="#FFA8C0" ${ST}/>
+        <circle cx="50" cy="57" r="36" fill="#FFC4D4" ${ST}/>${face(50, 48, { mouth: false, dx: 14 })}
+        <ellipse cx="50" cy="66" rx="11" ry="8" fill="#FF9DB7" ${ST.replace('3.5', '3')}/>
+        <ellipse cx="46" cy="66" rx="1.8" ry="2.8" fill="${INK}"/><ellipse cx="54" cy="66" rx="1.8" ry="2.8" fill="${INK}"/>`;
+      break;
+    case 3: // 펭귄
+      b = `<ellipse cx="14" cy="64" rx="6" ry="13" fill="#6FA9E0" ${ST} transform="rotate(20 14 64)"/>
+        <ellipse cx="86" cy="64" rx="6" ry="13" fill="#6FA9E0" ${ST} transform="rotate(-20 86 64)"/>
+        <ellipse cx="50" cy="56" rx="36" ry="38" fill="#7FB6EA" ${ST}/>
+        <ellipse cx="50" cy="62" rx="26" ry="28" fill="#fff" stroke="${INK}" stroke-width="2"/>
+        ${face(50, 54, { mouth: false, dx: 11 })}<path d="M45 61 L55 61 L50 67 Z" fill="#FFB347" ${ST.replace('3.5', '2.5')}/>`;
+      break;
+    case 4: // 여우
+      b = `<path d="M18 42 L22 8 L46 26 Z" fill="#FFB36B" ${ST}/><path d="M82 42 L78 8 L54 26 Z" fill="#FFB36B" ${ST}/>
+        <path d="M24 32 L25 17 L37 26 Z" fill="#fff"/><path d="M76 32 L75 17 L63 26 Z" fill="#fff"/>
+        <circle cx="50" cy="58" r="35" fill="#FFC48A" ${ST}/>
+        <ellipse cx="50" cy="70" rx="19" ry="13" fill="#FFF8EE"/>${face(50, 53, { mouth: false, dx: 13 })}
+        <ellipse cx="50" cy="63" rx="4" ry="3" fill="${INK}"/>
+        <path d="M45 68 q2.5 3.5 5 0 q2.5 3.5 5 0" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/>`;
+      break;
+    case 5: { // 양
+      let w = '';
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        w += `<circle cx="${(50 + Math.cos(a) * 31).toFixed(1)}" cy="${(55 + Math.sin(a) * 31).toFixed(1)}" r="11" fill="#F4EEFF" ${ST}/>`;
+      }
+      b = `${w}<circle cx="50" cy="55" r="32" fill="#F4EEFF"/>
+        <ellipse cx="24" cy="50" rx="9" ry="5" fill="#D1BEFF" ${ST.replace('3.5', '2.5')}/>
+        <ellipse cx="76" cy="50" rx="9" ry="5" fill="#D1BEFF" ${ST.replace('3.5', '2.5')}/>
+        <ellipse cx="50" cy="58" rx="22" ry="21" fill="#FFEBDC" ${ST}/>${face(50, 56, { dx: 9 })}`;
+      break;
+    }
+    case 6: // 문어
+      b = `${[20, 35, 50, 65, 80].map((x) => `<ellipse cx="${x}" cy="82" rx="8" ry="11" fill="#FF9393" ${ST}/>`).join('')}
+        <path d="M13 74 Q12 16 50 16 Q88 16 87 74 Z" fill="#FF9F9F" ${ST}/>
+        <rect x="15" y="68" width="70" height="8" fill="#FF9F9F"/>
+        <circle cx="66" cy="30" r="4" fill="#fff" opacity=".7"/>${face(50, 50, { mouth: false, dx: 13 })}
+        <circle cx="50" cy="60" r="3.6" fill="none" stroke="${INK}" stroke-width="2.4"/>`;
+      break;
+    case 7: // 고래
+      b = `<path d="M47 27 V15 M47 24 q-7 -12 -14 -8 M47 24 q7 -12 14 -8" fill="none" stroke="#5EC4F0" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M78 58 Q95 40 96 30 Q88 44 80 47 Q92 38 88 26" fill="#8EE0CE" ${ST}/>
+        <ellipse cx="46" cy="60" rx="38" ry="30" fill="#8EE0CE" ${ST}/>
+        <path d="M14 70 Q46 92 78 70 Q62 86 46 86 Q28 86 14 70Z" fill="#D8FFF5"/>
+        ${face(44, 57, { dx: 12 })}`;
+      break;
+  }
+  return `<svg class="ch" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${b}</svg>`;
+}
+
+// =====================================================
+//  기본 데이터
+// =====================================================
+const EMO = [
+  { k: 'laugh', e: '😆', t: '웃겨요' },
+  { k: 'cry', e: '😭', t: '슬퍼요' },
+  { k: 'angry', e: '😡', t: '화나요' },
+  { k: 'speechless', e: '😑', t: '어이없어요' },
+  { k: 'surprised', e: '😲', t: '놀라워요' },
+];
+const CLUE_TIMES = [10, 15, 20, 30, 60];
+function scoreMsg(n) {
+  if (n >= 13) return { e: '🏆', m: '완벽하군요! 이 점수를 다시 받을 수 있을까요?' };
+  if (n === 12) return { e: '🎉', m: '믿을 수 없어요! 서로 칭찬해주세요!' };
+  if (n === 11) return { e: '🌟', m: '훌륭해요! 모두가 힘을 합친 결과예요!' };
+  if (n >= 9) return { e: '👏', m: '잘했어요! 13점이 코 앞이에요!' };
+  if (n >= 7) return { e: '💪', m: '더 잘할 수 있으니 한 번 더 분발하세요!' };
+  if (n >= 4) return { e: '🌱', m: '시작이 좋으니 다시 한번 해보세요!' };
+  return { e: '😵', m: '머리가 너무 나빠요ㅠ 노력해주세요!' };
+}
+
+const LS = {
+  get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+  del: (k) => { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (sel) => document.querySelector(sel);
+const norm = (s) => String(s || '').replace(/\s+/g, '');
+
+// 서버와 같은 힌트 검사 (바로 안내하기 위해)
+function validateClue(raw, word) {
+  const t = String(raw || '').trim();
+  const w = norm(word);
+  if (!t) return '힌트를 입력해 주세요.';
+  if (/\s/.test(t)) return '띄어쓰기 없이 한 단어로 적어 주세요.';
+  if (t.length > 12) return '힌트는 12글자까지 쓸 수 있어요.';
+  if (/[a-zA-Zａ-ｚＡ-Ｚ]/.test(t)) return '영어는 쓸 수 없어요.';
+  if (/[0-9０-９]/.test(t)) return '숫자는 쓸 수 없어요.';
+  if (/[ㄱ-ㅎㅏ-ㅣ]/.test(t)) return '자음·모음만 따로 쓸 수 없어요. (예: ㅋㅋ, ㅠㅠ)';
+  if (!/^[가-힣]+$/.test(t)) return '한글 단어만 쓸 수 있어요. (특수문자·이모티콘·한자 불가)';
+  if (t.includes(w)) return '정답 단어가 들어간 힌트는 쓸 수 없어요.';
+  if (w.includes(t)) return '정답 단어의 일부는 힌트로 쓸 수 없어요.';
+  for (let i = 0; i < t.length - 1; i++) if (w.includes(t.substr(i, 2))) return '정답과 두 글자 이상 겹치는 합성어는 쓸 수 없어요.';
+  return null;
+}
+
+// =====================================================
+//  사운드 (배경음악 + 효과음, Web Audio로 직접 연주)
+// =====================================================
+const Sound = (() => {
+  let ctx = null, master, musicBus, sfxBus, noiseBuf, loopId = null, step = 0, nextT = 0;
+  let bgmOn = LS.get('jo_bgm') !== '0';
+  let sfxOn = LS.get('jo_sfx') !== '0';
+  const BPM = 136, STEP = 60 / BPM / 2; // 8분음표
+  const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  // C - G - Am - F (밝은 진행), 8마디 멜로디 반복
+  const CHORDS = [[60, 64, 67], [55, 59, 62], [57, 60, 64], [53, 57, 60]];
+  const _ = 0;
+  const MEL = [
+    76, 79, 84, 79, 76, 79, 81, 79,   74, _, 79, 74, 71, 74, 79, _,
+    72, 76, 81, 76, 72, 76, 79, 76,   77, 76, 74, 72, 74, _, 72, _,
+    84, _, 83, 84, 79, _, 76, _,      79, 81, 83, 84, 86, _, 83, _,
+    81, _, 79, 81, 84, _, 81, 79,     77, 79, 81, 77, 79, _, _, _,
+  ];
+  function ensure() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
+      musicBus = ctx.createGain(); musicBus.gain.value = 0.2; musicBus.connect(master);
+      sfxBus = ctx.createGain(); sfxBus.gain.value = 0.45; sfxBus.connect(master);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return true;
+  }
+  function tone(f, t, dur, type, vol, bus) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(t, dur, vol, freq, type) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; f.type = type; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(musicBus); s.start(t); s.stop(t + dur + 0.02);
+  }
+  function kick(t) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.2);
+  }
+  function playStep(s, t) {
+    const pos = s % 8, bar = Math.floor(s / 8) % 4, ch = CHORDS[bar];
+    const m = MEL[s % MEL.length];
+    if (m) { tone(mtof(m), t, STEP * 0.95, 'triangle', 0.32, musicBus); tone(mtof(m), t, STEP * 0.5, 'square', 0.05, musicBus); }
+    if (pos % 2 === 0) tone(mtof(ch[0] - 24 + (pos % 4 === 2 ? 12 : 0)), t, STEP * 1.6, 'triangle', 0.45, musicBus);
+    if (pos % 2 === 1) ch.forEach((n) => tone(mtof(n), t, STEP * 0.7, 'triangle', 0.07, musicBus));
+    if (pos === 0 || pos === 4) kick(t);
+    if (pos === 2 || pos === 6) noise(t, 0.12, 0.35, 1600, 'bandpass');
+    noise(t, 0.035, 0.12, 7000, 'highpass');
+  }
+  function tick() {
+    while (nextT < ctx.currentTime + 0.15) { playStep(step, nextT); nextT += STEP; step++; }
+  }
+  function startBgm() {
+    if (!bgmOn || loopId || document.hidden || !ensure()) return;
+    step = 0; nextT = ctx.currentTime + 0.08;
+    loopId = setInterval(tick, 25);
+  }
+  function stopBgm() { if (loopId) clearInterval(loopId); loopId = null; }
+  function sfx(name) {
+    if (!sfxOn || !ensure()) return;
+    const t = ctx.currentTime;
+    const seq = (notes, gap, type, vol, dur) => notes.forEach((n, i) => tone(mtof(n), t + i * gap, dur || 0.18, type || 'triangle', vol || 0.5, sfxBus));
+    switch (name) {
+      case 'ding': seq([84, 88], 0.09, 'sine', 0.4); break;
+      case 'tick': seq([96], 0, 'square', 0.12, 0.06); break;
+      case 'win': seq([72, 76, 79, 84, 88, 91], 0.08, 'triangle', 0.5, 0.25); break;
+      case 'lose': seq([67, 63, 60], 0.18, 'triangle', 0.45, 0.3); break;
+      case 'pop': seq([79 + Math.floor(Math.random() * 6)], 0, 'sine', 0.4, 0.12); break;
+      case 'click': seq([88], 0, 'sine', 0.2, 0.05); break;
+    }
+  }
+  function render() {
+    $('#bgmBtn').textContent = bgmOn ? '🎵 음악 ON' : '🔇 음악 OFF';
+    $('#bgmBtn').classList.toggle('off', !bgmOn);
+    $('#sfxBtn').textContent = sfxOn ? '🔔 효과음' : '🔕 효과음';
+    $('#sfxBtn').classList.toggle('off', !sfxOn);
+  }
+  $('#bgmBtn').onclick = () => { bgmOn = !bgmOn; LS.set('jo_bgm', bgmOn ? '1' : '0'); bgmOn ? startBgm() : stopBgm(); render(); };
+  $('#sfxBtn').onclick = () => { sfxOn = !sfxOn; LS.set('jo_sfx', sfxOn ? '1' : '0'); render(); };
+  // 브라우저 정책상 첫 터치 이후에 소리가 날 수 있어요
+  document.addEventListener('pointerdown', () => { ensure(); startBgm(); });
+  document.addEventListener('visibilitychange', () => { document.hidden ? stopBgm() : startBgm(); });
+  render();
+  return { sfx };
+})();
+
+// =====================================================
+//  연결 & 상태
+// =====================================================
+const socket = io({ reconnection: true, reconnectionDelay: 800 });
+const app = $('#app');
+let S = null;            // 서버 상태
+let offset = 0;          // 서버 시간 - 내 시간
+let viewKey = '';        // 화면 골격 캐시 키
+let selChoice = null;    // 이지모드 선택한 보기
+let prevSig = '';        // 단계 변화 감지
+let lastTickSec = -1;
+
+function saveSession(code, pid, name) { LS.set('jo_code', code); LS.set('jo_pid', pid); if (name) LS.set('jo_name', name); }
+function clearSession() { LS.del('jo_code'); LS.del('jo_pid'); }
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function emit(ev, data, cb) {
+  socket.emit(ev, data || {}, (res) => {
+    if (res && res.ok === false && res.error) toast('⚠️ ' + res.error);
+    if (cb) cb(res || {});
+  });
+}
+const P = (id) => (S && S.players.find((p) => p.id === id)) || { name: '?', charId: 0, connected: false };
+const colorOf = (id) => CHARS[P(id).charId].color;
+
+socket.on('connect', () => {
+  $('#overlayMsg').classList.remove('show');
+  const code = LS.get('jo_code'), pid = LS.get('jo_pid');
+  if (code && pid) {
+    socket.emit('resume', { code, playerId: pid }, (res) => {
+      if (!res || !res.ok) { clearSession(); S = null; renderHome(); toast('방이 사라졌어요. 새로 시작해 주세요.'); }
+    });
+  } else if (!S) renderHome();
+});
+socket.on('disconnect', () => { if (S) $('#overlayMsg').classList.add('show'); });
+socket.on('state', (s) => {
+  offset = s.serverNow - Date.now();
+  const sig = s.phase + ':' + s.round + ':' + (s.game ? s.game.guesserId : '');
+  const changed = prevSig && sig !== prevSig;
+  prevSig = sig;
+  S = s;
+  saveSession(s.code, s.myId);
+  render();
+  if (changed) onPhaseChange();
+});
+socket.on('toast', (m) => toast(m));
+socket.on('reaction', (d) => spawnReaction(d));
+socket.on('kicked', () => { clearSession(); S = null; renderHome(); toast('방장이 대기실에서 내보냈어요.'); });
+socket.on('replaced', () => { S = null; app.innerHTML = '<div class="card center"><h2>📱 다른 기기에서 접속했어요</h2><p>이 화면을 새로고침하면 이 기기로 다시 들어와요.</p></div>'; viewKey = 'replaced'; });
+
+function onPhaseChange() {
+  if (navigator.vibrate) navigator.vibrate(60);
+  if (S.phase === 'result' && S.game && S.game.guess) {
+    if (S.game.guess.success) { Sound.sfx('win'); confetti(); } else Sound.sfx('lose');
+  } else if (S.phase === 'end') { Sound.sfx('win'); confetti(); }
+  else Sound.sfx('ding');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =====================================================
+//  화면 그리기
+// =====================================================
+function render() {
+  const isHost = S && S.hostId === S.myId;
+  $('#hostfab').style.display = S && isHost && !['lobby', 'end'].includes(S.phase) ? 'block' : 'none';
+  if (!S) return renderHome();
+  if (S.phase === 'lobby') return renderLobby();
+  if (S.phase === 'end') return renderEnd();
+  renderGame();
+}
+
+// ---------- 홈 ----------
+function renderHome() {
+  if (viewKey === 'home') return;
+  viewKey = 'home';
+  $('#hostfab').style.display = 'none';
+  const rc = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
+  app.innerHTML = `
+  <div class="card">
+    <div class="logo">저스트 <span>원</span></div>
+    <div class="subtitle">🌈 다 같이 힌트 주고 단어 맞히기!</div>
+    <div class="parade">${CHARS.map((c, i) => `<div class="bob" style="animation-delay:${i * 0.18}s">${charSVG(i)}</div>`).join('')}</div>
+    <div class="tiny">닉네임</div>
+    <input id="nameIn" class="txt" maxlength="8" placeholder="최대 8글자" value="${esc(LS.get('jo_name') || '')}">
+    ${rc ? `
+      <button class="btn big pink" data-act="join">🙌 ${esc(rc)} 방에 참가하기</button>
+      <input id="codeIn" type="hidden" value="${esc(rc)}">
+      <button class="btn ghost" data-act="create">🏠 그냥 새 방 만들기</button>` : `
+      <button class="btn big pink" data-act="create">🏠 방 만들기</button>
+      <div class="divider">친구 방에 들어가기</div>
+      <div class="row"><input id="codeIn" class="txt" maxlength="4" placeholder="방 코드" style="text-transform:uppercase;flex:1.4">
+      <button class="btn sky" style="margin-top:0" data-act="join">참가</button></div>`}
+    <div class="rules">
+      🎯 술래는 번호(1~5)만 고르고, 나머지는 그 단어의 <b>힌트</b>를 한 단어씩 적어요.<br>
+      👯 <b>똑같은 힌트</b>나 <b>비슷한 힌트</b>는 술래에게 안 보여요!<br>
+      🏅 2~8명 · 13라운드 · 다 같이 점수를 모으는 협동 게임
+    </div>
+  </div>`;
+}
+
+// ---------- 대기실 ----------
+function renderLobby() {
+  viewKey = 'lobby';
+  const isHost = S.hostId === S.myId;
+  const st = S.settings;
+  const modeBtn = (m, label, sub) => `<button class="segbtn ${st.mode === m ? 'on' : ''}" data-act="mode" data-m="${m}" ${isHost ? '' : 'disabled'}>${label}<small>${sub}</small></button>`;
+  app.innerHTML = `
+  <div class="card">
+    <div class="lobbyhead">
+      <div><div class="tiny">방 코드</div><div class="code">${esc(S.code)}</div></div>
+      <button class="btn small sky" data-act="share">🔗 초대하기</button>
+    </div>
+    <div class="tiny">참가자 ${S.players.length}/8명 · 2명부터 시작할 수 있어요</div>
+    <div class="plist">${S.players.map((p) => `
+      <div class="prow ${p.connected ? '' : 'off'}" style="--c:${CHARS[p.charId].color}">
+        ${charSVG(p.charId)}<div class="nm">${p.id === S.hostId ? '👑 ' : ''}${esc(p.name)}${p.id === S.myId ? ' (나)' : ''}${p.connected ? '' : ' 💤'}</div>
+        ${isHost && p.id !== S.myId ? `<button class="kick" data-act="kick" data-id="${p.id}">내보내기</button>` : ''}
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <h3>🎨 내 캐릭터 고르기</h3>
+    <div class="tiny" style="margin-bottom:8px">캐릭터 색이 내 힌트 카드 색이 돼요</div>
+    <div class="chargrid">${CHARS.map((c, i) => {
+      const owner = S.players.find((p) => p.charId === i);
+      const mine = owner && owner.id === S.myId;
+      return `<button class="charbtn ${mine ? 'mine' : ''} ${owner && !mine ? 'taken' : ''}" style="--c:${c.color}" data-act="char" data-id="${i}" ${owner && !mine ? 'disabled' : ''}>
+        ${charSVG(i)}<span>${owner && !mine ? esc(owner.name) : c.name}</span></button>`;
+    }).join('')}</div>
+  </div>
+  <div class="card">
+    <h3>⚙️ 게임 설정 ${isHost ? '' : '<span class="tiny">(방장만 바꿀 수 있어요)</span>'}</h3>
+    <div class="tiny">게임 모드</div>
+    <div class="seg">${modeBtn('normal', '🌟 일반모드', '정답을 직접 입력')}${modeBtn('easy', '🧸 이지모드', '주제별 · 보기에서 고르기')}</div>
+    <div class="tiny">✍️ 힌트 쓰는 시간</div>
+    <div class="seg">${CLUE_TIMES.map((t) => `<button class="segbtn ${st.clueTime === t ? 'on' : ''}" data-act="time" data-t="${t}" ${isHost ? '' : 'disabled'}>${t}초</button>`).join('')}</div>
+    <div class="tiny">🔍 비슷한 힌트 검토 시간: 12초 (고정)</div>
+  </div>
+  ${isHost
+    ? `<button class="btn big green" data-act="start" ${S.players.length < 2 ? 'disabled' : ''}>🎮 게임 시작!</button>`
+    : `<div class="card waiting">방장이 게임을 시작하길 기다리는 중<span class="dots"></span></div>`}
+  <button class="btn ghost" data-act="leave">🚪 나가기</button>`;
+}
+
+// ---------- 공통 조각 ----------
+function hintCard(c, opts = {}) {
+  const p = P(c.pid);
+  const label = { dup: '👯 똑같은 힌트', voted: '🚫 투표로 제거', none: '⏰ 시간 초과' }[c.status];
+  const target = 'hint:' + c.pid;
+  const canReact = opts.react && c.status !== 'none';
+  const reacted = S.game.myReacted.includes(target);
+  return `<div class="hint ${c.status} ${opts.vote && c.status === 'ok' ? 'vote' : ''} ${c.myVote ? 'myvote' : ''}"
+      style="--c:${CHARS[p.charId].color}" data-target="${target}" ${opts.vote && c.status === 'ok' ? `data-act="vote" data-id="${c.pid}"` : ''}>
+    ${opts.vote && c.votes ? `<div class="vc">🚫 ${c.votes}</div>` : ''}
+    <div class="who">${charSVG(p.charId)}${esc(p.name)}</div>
+    <div class="ht">${c.text == null ? '(힌트 없음)' : esc(c.text)}</div>
+    ${label ? `<span class="tag">${label}</span>` : ''}
+    ${canReact ? (reacted ? `<div class="rxdone">반응 완료 ✓</div>` : reactBar(target)) : ''}
+  </div>`;
+}
+function reactBar(target) {
+  return `<div class="rx">${EMO.map((e) => `<button title="${e.t}" data-act="react" data-target="${target}" data-e="${e.k}">${e.e}</button>`).join('')}</div>`;
+}
+function timerHTML() { return `<div class="timer" id="timer"><div class="bar" id="tbar"></div><div class="num" id="tnum"></div></div>`; }
+
+// ---------- 게임 ----------
+function renderGame() {
+  const g = S.game;
+  const me = S.myId;
+  const isG = g.guesserId === me;
+  const mySub = g.submitted.includes(me);
+  const myDone = g.reviewDone.includes(me);
+  const key = ['game', S.phase, S.round, g.guesserId, isG, mySub, myDone].join('|');
+  if (key !== viewKey) {
+    viewKey = key;
+    selChoice = null;
+    app.innerHTML = `<div class="hud" id="hud"></div><div class="strip" id="strip"></div>
+      ${S.phase === 'clue' || S.phase === 'review' ? timerHTML() : ''}
+      <div class="card">${stageHTML(isG, mySub, myDone)}</div>`;
+    const inp = $('#clueIn') || $('#guessIn');
+    if (inp) setTimeout(() => inp.focus(), 50);
+  }
+  // 바뀌는 부분만 갱신
+  const gName = P(g.guesserId).name;
+  $('#hud').innerHTML = `<span class="pill">🎲 ${S.round}/${S.totalRounds} 라운드</span><span class="pill">⭐ ${S.score}점</span>
+    <span class="pill">${S.settings.mode === 'easy' ? '🧸 이지' : '🌟 일반'}</span>
+    ${g.topic ? `<span class="pill topic">${g.topicEmoji} 주제: ${esc(g.topic)}</span>` : ''}`;
+  $('#strip').innerHTML = S.players.map((p) => {
+    let st = '';
+    if (p.id === g.guesserId) st = '🎯술래';
+    else if (S.phase === 'clue') st = g.submitted.includes(p.id) ? '✅' : '✍️';
+    else if (S.phase === 'review') st = g.reviewDone.includes(p.id) ? '✅' : '🔍';
+    return `<div class="chip ${p.connected ? '' : 'off'} ${p.id === g.guesserId ? 'guesser' : ''}" style="--c:${CHARS[p.charId].color}">
+      ${charSVG(p.charId)}${esc(p.name)}<span class="st">${st}${p.connected ? '' : '💤'}</span></div>`;
+  }).join('');
+  updateDyn(isG, gName);
+  updateTimer();
+}
+
+function stageHTML(isG, mySub, myDone) {
+  const g = S.game;
+  const gName = esc(P(g.guesserId).name);
+  const wordBox = () => `<div class="answer"><div class="lbl">${g.pickedIdx + 1}번 단어</div><div class="w">${esc(g.word)}</div></div>`;
+  switch (S.phase) {
+    case 'pick':
+      if (isG) return `<div class="big-title">🎯 내가 술래예요!</div>
+        <div class="desc">${g.topic ? `이번 주제는 <b>${g.topicEmoji} ${esc(g.topic)}</b>!<br>` : ''}몇 번 단어를 맞혀볼까요? 카드를 하나 골라주세요</div>
+        <div class="fcards">${[1, 2, 3, 4, 5].map((n) => `<div class="fcard" data-act="pick" data-i="${n - 1}"><span>${n}</span></div>`).join('')}</div>`;
+      return `<div class="big-title">🎯 ${gName}님이 술래예요</div>
+        <div class="desc">술래가 번호를 고르는 중<span class="dots"></span><br>이번 단어들을 미리 살펴보세요 (술래에게는 비밀! 🤫)</div>
+        <div class="wlist">${g.words.map((w, i) => `<div class="witem"><b>${i + 1}</b>${esc(w)}</div>`).join('')}</div>`;
+    case 'clue':
+      if (isG) return `<div class="big-title">✍️ 친구들이 힌트를 쓰는 중</div>
+        <div class="bigchar bob">${charSVG(P(S.myId).charId)}</div>
+        <div class="desc">내가 고른 건 <b>${g.pickedIdx + 1}번</b> 카드! 두근두근…</div><div id="dyn"></div>`;
+      if (mySub) return `<div class="big-title">✅ 힌트 제출 완료!</div>${wordBox()}
+        <div class="hints" style="grid-template-columns:1fr">${hintCard({ pid: S.myId, text: g.myClue, status: 'ok' })}</div>
+        <div class="desc">다른 친구들을 기다리는 중<span class="dots"></span></div><div id="dyn"></div>`;
+      return `<div class="big-title">✍️ ${gName}님에게 줄 힌트!</div>${wordBox()}
+        <input id="clueIn" class="txt" maxlength="12" placeholder="한 단어 힌트" autocomplete="off">
+        <div class="err" id="clueErr"></div>
+        <button class="btn big pink" data-act="clue" id="clueBtn">힌트 보내기 💌</button>
+        <div class="note">📌 <b>한글 한 단어</b>만! 영어·숫자·특수문자·ㅋㅋ 같은 글자는 안 돼요.<br>
+        📌 정답 단어나 정답 일부가 들어간 말(합성어)도 안 돼요.<br>
+        📌 다른 사람과 <b>똑같은 힌트</b>를 쓰면 둘 다 지워져요!</div><div id="dyn"></div>`;
+    case 'review':
+      if (isG) return `<div class="big-title">🔍 친구들이 힌트를 검토 중</div>
+        <div class="bigchar bob">${charSVG(P(S.myId).charId)}</div>
+        <div class="desc">비슷한 힌트를 골라내고 있어요. 잠시만 기다려 주세요<span class="dots"></span></div>`;
+      return `<div class="big-title">🔍 비슷한 힌트 골라내기</div>${wordBox()}
+        <div class="note">👆 아래 힌트 중에서 <b>뜻이 겹치는 힌트</b>(예: 과일 / 과일들)나 <b>단어가 아닌 힌트</b>(예: 아무 글자)를 눌러 제거에 투표하세요.<br>
+        다시 누르면 투표가 취소돼요. <b>과반수</b>가 찬성하면 술래에게 보이지 않아요.</div>
+        <div id="dyn"></div>
+        ${myDone ? `<div class="desc mt">✅ 검토 완료! 다른 친구들을 기다리는 중<span class="dots"></span></div>`
+          : `<button class="btn green" data-act="reviewDone">👍 검토 완료</button>`}`;
+    case 'guess':
+      if (isG) {
+        const input = S.settings.mode === 'easy'
+          ? `<div class="desc mt">보기에서 정답을 골라주세요!</div><div class="choices" id="choices"></div>
+             <button class="btn big pink" data-act="confirmChoice" id="choiceBtn" disabled>이걸로 결정! 🎯</button>`
+          : `<input id="guessIn" class="txt mt" maxlength="20" placeholder="정답은 무엇일까요?" autocomplete="off">
+             <button class="btn big pink" data-act="guess">정답 제출 🎯</button>`;
+        return `<div class="big-title">🤔 힌트를 보고 맞혀보세요!</div>
+          ${g.topic ? `<div class="desc">주제: ${g.topicEmoji} ${esc(g.topic)}</div>` : ''}
+          <div id="dyn"></div>${input}
+          <button class="btn ghost" data-act="pass">🙈 모르겠어요 (패스)</button>`;
+      }
+      return `<div class="big-title">🤔 ${gName}님이 생각 중<span class="dots"></span></div>${wordBox()}
+        <div id="dyn"></div>
+        ${g.choices ? `<div class="tiny mt">술래가 보는 보기</div><div class="choices">${g.choices.map((c) => `<button class="choice ${c === g.word ? 'right' : ''}" disabled>${esc(c)}</button>`).join('')}</div>` : ''}`;
+    case 'result': {
+      const ok = g.guess && g.guess.success;
+      const last = S.round >= S.totalRounds;
+      return `<div class="banner ${ok ? 'win' : 'lose'}">${ok ? '🎉 정답이에요!' : g.guess && g.guess.pass ? '🙈 패스했어요' : '😢 아쉬워요!'}</div>
+        <div class="answer"><div class="lbl">정답</div><div class="w">${esc(g.word)}</div></div>
+        <div id="dyn"></div>
+        <button class="btn big ${last ? 'yellow' : 'sky'}" data-act="next">${last ? '🏁 최종 결과 보기' : '다음 라운드 ▶'}</button>`;
+    }
+  }
+  return '';
+}
+
+function updateDyn(isG, gName) {
+  const g = S.game;
+  const dyn = $('#dyn');
+  if (S.phase === 'clue' && dyn) {
+    dyn.innerHTML = `<div class="desc mt">힌트 제출 ${g.submitted.length}/${g.givers.length}</div>`;
+  }
+  if (S.phase === 'review' && dyn && g.clues) {
+    dyn.innerHTML = `<div class="tiny center mt">참여 인원 ${g.voterCount}명 → ${Math.floor(g.voterCount / 2) + 1}표 이상이면 제거</div>
+      <div class="hints">${g.clues.map((c) => hintCard(c, { vote: true })).join('')}</div>`;
+  }
+  if (S.phase === 'guess' && dyn) {
+    const list = g.clues || [];
+    const visible = list.filter((c) => c.status === 'ok');
+    dyn.innerHTML = isG
+      ? (visible.length ? `<div class="hints">${visible.map((c) => hintCard(c, { react: true })).join('')}</div>`
+        : `<div class="desc">😱 남은 힌트가 하나도 없어요! 감으로 맞혀보세요!</div>`)
+      : `<div class="tiny">술래에게는 회색 힌트가 보이지 않아요</div><div class="hints">${list.map((c) => hintCard(c, { react: true })).join('')}</div>`;
+    const box = $('#choices');
+    if (box && g.choices) {
+      box.innerHTML = g.choices.map((c) => `<button class="choice ${selChoice === c ? 'sel' : ''}" data-act="choose" data-w="${esc(c)}">${esc(c)}</button>`).join('');
+      $('#choiceBtn').disabled = !selChoice;
+    }
+  }
+  if (S.phase === 'result' && dyn) {
+    const gs = g.guess;
+    const reacted = g.myReacted.includes('guess');
+    const ans = gs.pass ? '패스 🙈' : esc(gs.text);
+    dyn.innerHTML = `<div class="guesscard" data-target="guess">
+        <div class="tiny">${esc(gName)}님의 답</div>
+        <div class="gw">${ans} ${gs.success ? '⭕' : '❌'}</div>
+        ${reacted ? '<div class="rxdone">반응 완료 ✓</div>' : reactBar('guess')}
+      </div>
+      <div class="hints">${(g.clues || []).map((c) => hintCard(c, { react: true })).join('')}</div>`;
+  }
+}
+
+// 타이머 표시 (0.2초마다)
+function updateTimer() {
+  const el = $('#timer');
+  if (!el || !S || !S.endsAt) return;
+  const remain = Math.max(0, (S.endsAt - (Date.now() + offset)) / 1000);
+  const pct = S.phaseDuration ? Math.min(100, (remain / S.phaseDuration) * 100) : 0;
+  $('#tbar').style.width = pct + '%';
+  const sec = Math.ceil(remain);
+  $('#tnum').textContent = sec > 0 ? `⏰ ${sec}초` : '⏰ 시간 끝!';
+  el.classList.toggle('hurry', sec <= 5);
+  if (sec !== lastTickSec) {
+    lastTickSec = sec;
+    if (sec > 0 && sec <= 3) Sound.sfx('tick');
+  }
+}
+setInterval(updateTimer, 200);
+
+// ---------- 종료 ----------
+function renderEnd() {
+  viewKey = 'end';
+  const isHost = S.hostId === S.myId;
+  const sm = scoreMsg(S.score);
+  const played = S.history.length;
+  app.innerHTML = `
+  <div class="card center">
+    <div class="tiny">${S.endedEarly ? `🛑 방장이 게임을 끝냈어요 · ${played}라운드까지 진행` : `13라운드 완주!`}</div>
+    <div style="font-size:54px">${sm.e}</div>
+    <div class="score">${S.score}<small>점</small></div>
+    <div class="tiny">${played}라운드 중 ${S.score}번 성공</div>
+    <div class="endmsg">${sm.m}</div>
+    <div class="parade">${S.players.map((p, i) => `<div class="bob" style="animation-delay:${i * 0.15}s">${charSVG(p.charId)}</div>`).join('')}</div>
+  </div>
+  <div class="card">
+    <h3>📜 라운드 기록</h3>
+    ${played ? `<table class="hist">${S.history.map((h) => `<tr>
+      <td>${h.round}</td><td>${esc(h.guesserName)}</td>
+      <td>${h.topic ? `<span class="tiny">${esc(h.topic)}</span><br>` : ''}${esc(h.word)}</td>
+      <td>${h.success ? '⭕' : h.pass ? '🙈 패스' : `❌<br><span class="tiny">${esc(h.guess)}</span>`}</td></tr>`).join('')}</table>`
+      : '<div class="desc">완료된 라운드가 없어요</div>'}
+  </div>
+  ${isHost ? `<button class="btn big green" data-act="restart">🔁 같은 멤버로 다시 하기</button>`
+    : `<div class="card waiting">방장이 다시 시작하면 대기실로 이동해요</div>`}
+  <button class="btn ghost" data-act="leave">🚪 나가기</button>`;
+}
+
+// =====================================================
+//  효과
+// =====================================================
+function spawnReaction(d) {
+  const emo = EMO.find((e) => e.k === d.emoji);
+  if (!emo || !S) return;
+  const p = P(d.pid);
+  const el = document.querySelector(`[data-target="${d.target}"]`);
+  let x = innerWidth / 2, y = innerHeight / 3;
+  if (el) {
+    const r = el.getBoundingClientRect();
+    x = r.left + r.width * (0.2 + Math.random() * 0.6);
+    y = r.top + r.height * 0.4;
+  }
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.style.left = x + 'px';
+  b.style.top = y + 'px';
+  b.innerHTML = `<span class="be">${emo.e}</span><span class="bn" style="background:${CHARS[p.charId].color}">${esc(p.name)}</span>`;
+  $('#fx').appendChild(b);
+  setTimeout(() => b.remove(), 3000); // 3초 뒤 사라짐
+  Sound.sfx('pop');
+}
+function confetti() {
+  const items = ['🎉', '⭐', '🌸', '💖', '🎊', '✨', '🍀', '🌈'];
+  for (let i = 0; i < 36; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.textContent = items[i % items.length];
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.animationDuration = 2 + Math.random() * 1.8 + 's';
+    c.style.animationDelay = Math.random() * 0.6 + 's';
+    $('#fx').appendChild(c);
+    setTimeout(() => c.remove(), 4600);
+  }
+}
+
+// =====================================================
+//  방장 메뉴
+// =====================================================
+function openHostMenu() {
+  const canForce = S.phase === 'clue' || S.phase === 'review';
+  const m = $('#modal');
+  m.innerHTML = `<div class="card">
+    <h3>👑 방장 메뉴</h3>
+    <div class="tiny">휴대폰이 꺼진 친구 때문에 게임이 멈췄을 때 사용하세요</div>
+    ${canForce ? `<button class="btn yellow" data-act="hforce">⏩ 기다리지 않고 바로 다음 단계</button>` : ''}
+    <button class="btn sky" data-act="hskip">⏭️ 술래 넘기기 (이번 라운드 다시)</button>
+    <button class="btn red" data-act="hend">🛑 게임 종료 (지금까지 결과 보기)</button>
+    <button class="btn ghost" data-act="closeModal">닫기</button>
+  </div>`;
+  m.classList.add('show');
+}
+function closeModal() { $('#modal').classList.remove('show'); }
+$('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+
+// =====================================================
+//  버튼 동작
+// =====================================================
+function sendClue() {
+  const inp = $('#clueIn');
+  if (!inp) return;
+  const err = validateClue(inp.value, S.game.word);
+  if (err) { $('#clueErr').textContent = '⚠️ ' + err; Sound.sfx('lose'); return; }
+  $('#clueBtn').disabled = true;
+  emit('clue', { text: inp.value.trim() }, (res) => {
+    if (!res.ok) { const b = $('#clueBtn'); if (b) b.disabled = false; if ($('#clueErr')) $('#clueErr').textContent = '⚠️ ' + (res.error || ''); }
+  });
+}
+function sendGuess() {
+  const inp = $('#guessIn');
+  if (!inp || !inp.value.trim()) return toast('정답을 입력해 주세요');
+  emit('guess', { text: inp.value.trim() });
+}
+function enterRoom(act) {
+  const name = ($('#nameIn').value || '').trim();
+  if (!name) return toast('닉네임을 입력해 주세요');
+  LS.set('jo_name', name);
+  if (act === 'create') {
+    emit('create', { name }, (res) => { if (res.ok) { saveSession(res.code, res.playerId, name); history.replaceState(null, '', '/?room=' + res.code); } });
+  } else {
+    const code = ($('#codeIn').value || '').trim().toUpperCase();
+    if (code.length !== 4) return toast('4글자 방 코드를 입력해 주세요');
+    const pid = LS.get('jo_code') === code ? LS.get('jo_pid') : null;
+    emit('join', { code, name, playerId: pid }, (res) => { if (res.ok) saveSession(res.code, res.playerId, name); });
+  }
+}
+function share() {
+  const link = location.origin + '/?room=' + S.code;
+  if (navigator.share) navigator.share({ title: '저스트 원 같이 해요!', text: `방 코드: ${S.code}`, url: link }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => toast('🔗 초대 링크를 복사했어요'));
+  else prompt('초대 링크를 복사하세요', link);
+}
+function leave() {
+  if (S && !['lobby', 'end'].includes(S.phase) && !confirm('게임에서 나갈까요? 같은 닉네임으로 다시 들어올 수 있어요.')) return;
+  socket.emit('leave', {}, () => {});
+  clearSession();
+  S = null; prevSig = '';
+  history.replaceState(null, '', '/');
+  viewKey = '';
+  render();
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const a = el.dataset.act;
+  if (a !== 'react') Sound.sfx('click');
+  switch (a) {
+    case 'create': case 'join': return enterRoom(a);
+    case 'share': return share();
+    case 'leave': return leave();
+    case 'char': return emit('pickChar', { charId: +el.dataset.id });
+    case 'mode': return emit('settings', { mode: el.dataset.m });
+    case 'time': return emit('settings', { clueTime: +el.dataset.t });
+    case 'kick': return confirm('이 친구를 내보낼까요?') && emit('kick', { playerId: el.dataset.id });
+    case 'start': return emit('start');
+    case 'pick': return emit('pick', { index: +el.dataset.i });
+    case 'clue': return sendClue();
+    case 'vote': return emit('vote', { target: el.dataset.id });
+    case 'reviewDone': return emit('reviewDone');
+    case 'guess': return sendGuess();
+    case 'pass': return confirm('이번 라운드를 패스할까요?') && emit('guess', { pass: true });
+    case 'choose':
+      selChoice = el.dataset.w;
+      document.querySelectorAll('.choice').forEach((b) => b.classList.toggle('sel', b.dataset.w === selChoice));
+      $('#choiceBtn').disabled = false;
+      return;
+    case 'confirmChoice': return selChoice && emit('guess', { text: selChoice });
+    case 'react':
+      e.stopPropagation();
+      el.parentElement.querySelectorAll('button').forEach((b) => (b.disabled = true)); // 한 번만
+      return emit('react', { target: el.dataset.target, emoji: el.dataset.e });
+    case 'next': return emit('next', { round: S.round });
+    case 'restart': return emit('restart');
+    case 'hostmenu': return openHostMenu();
+    case 'closeModal': return closeModal();
+    case 'hforce': closeModal(); return emit('host:force');
+    case 'hskip': closeModal(); return confirm('술래를 다음 사람에게 넘길까요?') && emit('host:skip');
+    case 'hend':
+      closeModal();
+      return confirm(`게임을 끝낼까요?\n지금까지 끝난 ${S.history.length}라운드의 결과로 점수를 보여줘요.`) && emit('host:end');
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  if (e.target.id === 'clueIn') sendClue();
+  else if (e.target.id === 'guessIn') sendGuess();
+  else if (e.target.id === 'nameIn' || e.target.id === 'codeIn') enterRoom(new URLSearchParams(location.search).get('room') || (e.target.id === 'codeIn') ? 'join' : 'create');
+});
+document.addEventListener('input', (e) => { if (e.target.id === 'clueIn' && $('#clueErr')) $('#clueErr').textContent = ''; });
+
+// 첫 화면
+if (!(LS.get('jo_code') && LS.get('jo_pid'))) renderHome();
+else app.innerHTML = '<div class="card center waiting">🔌 이전 게임에 다시 들어가는 중<span class="dots"></span></div>';
+</script>
+</body>
+</html>

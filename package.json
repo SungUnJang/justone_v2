@@ -1,0 +1,12 @@
+{
+  "name": "just-one-korean",
+  "version": "2.0.0",
+  "description": "2~8인 실시간 협동 단어 게임 - 저스트 원 (일반모드/이지모드)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
